@@ -35,24 +35,37 @@ def init_db():
     conn.close()
 
 
-def log_interaction(student_id: str, topic: str, engagement_seconds: float, score_delta: float) -> int:
+def log_interaction(student_id: str, topic: str, engagement_seconds: float, score_delta: float, new_score: float = 0.0) -> int:
     """
     Log an interaction to the database.
     
     Args:
         student_id: Student identifier
-        topic: Learning topic (must be in TOPICS list)
+        topic: Learning topic
         engagement_seconds: Total engagement seconds for this interaction
         score_delta: Score change for this interaction
+        new_score: Student's new total score after this interaction
         
     Returns:
         Interaction ID
     """
-    # Validate topic
-    # Accept any topic string from Gemini
+    from datetime import datetime, timezone
+    from sqlmodel import Session
+    from api.services import engine, PerformanceLog
     
+    # Log to SQLModel/PerformanceLog
+    with Session(engine) as session:
+        log = PerformanceLog(
+            student_id=student_id,
+            timestamp=datetime.now(timezone.utc),
+            topic=topic,
+            new_total_score=new_score
+        )
+        session.add(log)
+        session.commit()
+    
+    # Keep old SQLite logging for backward compatibility
     timestamp = time.time()
-    
     conn = sqlite3.connect("academic_twin.db")
     cursor = conn.cursor()
     

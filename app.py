@@ -6,10 +6,13 @@ No backend, no real AI, no database - just mock data and UI components.
 
 import streamlit as st
 import time
-from typing import List, Dict, Optional
 import dummy_data
+from typing import List, Dict, Optional
 from api.services import interact_with_twin
 import db
+
+if "show_analytics" not in st.session_state:
+    st.session_state.show_analytics = False
 
 
 def initialize_session_state():
@@ -248,6 +251,30 @@ def chat_page():
         st.session_state.message_count = 0
         st.rerun()
     
+    # Analytics button  
+    if st.button("📊 Analytics", type="secondary"):
+        st.session_state.show_analytics = not st.session_state.show_analytics
+        st.rerun()
+
+    if st.session_state.show_analytics:
+        st.markdown("---")
+        st.subheader("📊 Analytics")
+
+        import sqlite3
+        conn = sqlite3.connect("academic_twin.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT topic, COUNT(*) as count FROM interactions GROUP BY topic ORDER BY count DESC")
+        data = cursor.fetchall()
+        conn.close()
+
+        if data:
+            st.table({"Topic": [row[0] for row in data], "Count": [row[1] for row in data]})
+        else:
+            st.info("No data yet")
+
+
+
+    
     # Logout button
     st.markdown("---")
     if st.button("🚪 Logout", type="primary"):
@@ -261,6 +288,8 @@ def chat_page():
         st.session_state.total_engagement_seconds = 0
         st.session_state.current_score = 0.0
         st.rerun()
+
+
 
 
 def main():
@@ -291,6 +320,14 @@ def main():
             st.rerun()
         
         chat_page()
+
+    #db.log_interaction(
+    #student_id="student_1",
+    #topic=extracted_topic,
+   # engagement_seconds=total_engagement,
+    #score_delta=score_delta,
+    #new_score=st.session_state.current_score  # Add this line
+#)
 
 
 if __name__ == "__main__":
