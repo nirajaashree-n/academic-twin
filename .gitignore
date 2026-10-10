@@ -1,0 +1,8 @@
+.env
+*.db
+__pycache__/
+*.pyc
+.vscode/
+venv/
+.venv/
+.clinerules
