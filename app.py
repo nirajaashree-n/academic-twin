@@ -22,6 +22,9 @@ def initialize_session_state():
     
     if "initialized_welcome" not in st.session_state:
         st.session_state.initialized_welcome = False
+    
+    if "message_count" not in st.session_state:
+        st.session_state.message_count = 0
 
 
 def login_page():
@@ -47,6 +50,7 @@ def login_page():
                         st.session_state.authenticated = True
                         st.session_state.username = username
                         st.session_state.chat_history = []
+                        st.session_state.message_count = 0
                         st.success(f"Welcome, {username}!")
                         st.rerun()
                     else:
@@ -98,11 +102,12 @@ def chat_page():
     col1, col2, col3 = st.columns([3, 1, 1])
     
     with col1:
-        user_input = st.text_input(
+        user_input = st.text_area(
             "Type your message here...",
-            key="chat_input",
+            key=f"chat_input_{st.session_state.message_count}",
             label_visibility="collapsed",
-            placeholder="Ask a question or discuss a topic..."
+            placeholder="Ask a question or discuss a topic... (Press Enter to send, Shift+Enter for new line)",
+            height=38
         )
     
     with col2:
@@ -128,7 +133,17 @@ def chat_page():
             "content": twin_response
         })
         
+        # Increment message count to clear the input field
+        st.session_state.message_count += 1
+        
         # Clear input and rerun
+        st.rerun()
+    
+    # Clear Chat button
+    if st.button("🗑️ Clear Chat", type="secondary"):
+        st.session_state.chat_history = []
+        st.session_state.initialized_welcome = False
+        st.session_state.message_count = 0
         st.rerun()
     
     # Logout button
@@ -138,6 +153,7 @@ def chat_page():
         st.session_state.username = ""
         st.session_state.chat_history = []
         st.session_state.initialized_welcome = False
+        st.session_state.message_count = 0
         st.rerun()
 
 
