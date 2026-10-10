@@ -49,8 +49,7 @@ def log_interaction(student_id: str, topic: str, engagement_seconds: float, scor
         Interaction ID
     """
     # Validate topic
-    if topic not in TOPICS:
-        raise ValueError(f"Topic must be one of: {TOPICS}")
+    # Accept any topic string from Gemini
     
     timestamp = time.time()
     

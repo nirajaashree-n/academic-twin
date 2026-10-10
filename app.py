@@ -29,9 +29,6 @@ def initialize_session_state():
     if "message_count" not in st.session_state:
         st.session_state.message_count = 0
     
-    if "current_topic" not in st.session_state:
-        st.session_state.current_topic = "Kinematics"
-    
     if "engagement_start_time" not in st.session_state:
         st.session_state.engagement_start_time = None
     
@@ -191,20 +188,19 @@ def chat_page():
         
         # Call Academic Twin API
         try:
-            result = interact_with_twin(
+            # Call without topic parameter, unpack tuple response
+            response_text, extracted_topic, new_score = interact_with_twin(
                 student_id="student_1",  # Using fixed student ID for now
-                topic=st.session_state.current_topic,
                 user_input=user_input,
                 is_test_active=False  # Always learning mode for now
             )
             
-            twin_response = result["response"]
-            st.session_state.current_score = result["new_score"]
+            st.session_state.current_score = new_score
             
             # Append Twin's response with timestamp
             st.session_state.chat_history.append({
                 "role": "assistant",
-                "content": twin_response,
+                "content": response_text,
                 "timestamp": time.time()
             })
             
@@ -213,19 +209,20 @@ def chat_page():
             
         except Exception as e:
             # Fallback to dummy response if API fails
-            twin_response = f"API Error: {str(e)[:100]}... Using dummy response: {dummy_data.get_random_response()}"
+            response_text = f"API Error: {str(e)[:100]}... Using dummy response: {dummy_data.get_random_response()}"
             st.session_state.chat_history.append({
                 "role": "assistant",
-                "content": twin_response,
+                "content": response_text,
                 "timestamp": time.time()
             })
+            extracted_topic = "General"
             score_delta = 0.0
         
         # Log interaction to database
         try:
             db.log_interaction(
                 student_id="student_1",
-                topic=st.session_state.current_topic,
+                topic=extracted_topic,
                 engagement_seconds=total_engagement,
                 score_delta=score_delta
             )
